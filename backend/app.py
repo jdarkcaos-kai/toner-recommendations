@@ -1,11 +1,12 @@
 from fastapi.responses import FileResponse
 import os
-from fastapi import FastAPI
+import sqlite3
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from datetime import datetime
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,29 +15,78 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class PrinterModel(BaseModel):
-    model: str
-    toner: str
+DB_PATH = os.getenv('DB_PATH', './app.db')
 
-printer_data = [
-    PrinterModel(model="HP LaserJet Pro M15", toner="HP 48A"),
-    PrinterModel(model="Canon PIXMA MG2520", toner="Canon PG-245"),
-]
+class WaitlistItem(BaseModel):
+    email: str
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS waitlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    cursor.execute('''
+        INSERT OR IGNORE INTO waitlist (email) VALUES
+        ('user1@example.com'),
+        ('user2@example.com'),
+        ('user3@example.com')
+    ''')
+    conn.commit()
+    conn.close()
+
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 @app.get("/health")
-def health_check():
+def health():
     return {"status": "ok"}
 
-@app.get("/recommendations/{model}")
-def get_recommendation(model: str):
-    for printer in printer_data:
-        if printer.model.lower() == model.lower():
-            return {"model": printer.model, "toner": printer.toner}
-    return {"error": "No recommendations found for this model."}
+@app.post("/waitlist", response_model=dict)
+def add_to_waitlist(item: WaitlistItem):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR IGNORE INTO waitlist (email) VALUES (?)', (item.email,))
+    conn.commit()
+    cursor.execute('SELECT COUNT(*) as count FROM waitlist')
+    total = cursor.fetchone()['count']
+    conn.close()
+    return {"ok": True, "total": total}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv('PORT', 8001)))
+@app.get("/waitlist/count", response_model=dict)
+def get_waitlist_count():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) as count FROM waitlist')
+    count = cursor.fetchone()['count']
+    conn.close()
+    return {"count": count}
+
+class RecommendationRequest(BaseModel):
+    printer_model: str
+
+class RecommendationResponse(BaseModel):
+    toner: str
+
+@app.post("/recommend", response_model=RecommendationResponse)
+def recommend_toner(request: RecommendationRequest):
+    recommendations = {
+        "model_a": "Toner A",
+        "model_b": "Toner B",
+        "model_c": "Toner C"
+    }
+    toner = recommendations.get(request.printer_model.lower())
+    if not toner:
+        raise HTTPException(status_code=404, detail="No recommendations found for this printer model.")
+    return RecommendationResponse(toner=toner)
 
 @app.get("/", include_in_schema=False)
 @app.get("/{_spa_path:path}", include_in_schema=False)

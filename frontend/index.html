@@ -7,98 +7,117 @@
     <style>
         body {
             background-color: #0d1117;
-            color: #ffffff;
+            color: white;
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
         }
         header {
             text-align: center;
-            padding: 20px;
-        }
-        h1 {
-            color: #58a6ff;
+            margin-bottom: 20px;
         }
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            width: 300px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #58a6ff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: #ffffff;
         }
         .card {
             background-color: #161b22;
-            border-radius: 10px;
-            padding: 15px;
+            border-radius: 8px;
+            padding: 20px;
             margin: 10px;
             width: 300px;
-            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        .error {
-            color: red;
-            margin-top: 20px;
+        .button {
+            background-color: #58a6ff;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .email-section {
+            margin-top: 30px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Recomendaciones de Toner</h1>
-        <p>Encuentra el toner adecuado para tu impresora de manera rápida y fácil.</p>
+        <p>Encuentra el toner adecuado para tu impresora de manera rápida y sencilla.</p>
     </header>
     <div class="container">
-        <div class="form-group">
-            <input type="text" id="printerModel" placeholder="Ej: HP LaserJet Pro M15">
-            <button id="searchButton">Buscar Toner</button>
-        </div>
-        <p style="color:#8b949e;font-size:13px;margin-top:-10px">
-            Prueba con: <a href="#" style="color:#58a6ff" onclick="document.getElementById('printerModel').value='HP LaserJet Pro M15'">HP LaserJet Pro M15</a>
-            o <a href="#" style="color:#58a6ff" onclick="document.getElementById('printerModel').value='Canon PIXMA MG2520'">Canon PIXMA MG2520</a>
-        </p>
+        <input type="text" id="printerModel" placeholder="Ingresa el modelo de tu impresora" />
+        <button class="button" id="searchButton">Buscar Toner</button>
         <div id="recommendations"></div>
-        <div class="error" id="errorMessage"></div>
+    </div>
+    <div class="email-section">
+        <h2>¿Te interesa este producto?</h2>
+        <input type="email" id="emailInput" placeholder="Tu correo electrónico" />
+        <button class="button" id="subscribeButton">Quiero acceso anticipado</button>
+        <p id="subscriptionMessage"></p>
+        <p id="waitlistCount"></p>
     </div>
     <script>
-        document.getElementById('searchButton').addEventListener('click', function() {
-            const model = document.getElementById('printerModel').value;
-            if (!model) {
-                document.getElementById('errorMessage').innerText = 'Por favor, ingresa un modelo de impresora.';
-                return;
-            }
-            document.getElementById('errorMessage').innerText = '';
-            fetch(`/recommendations/${encodeURIComponent(model)}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error al obtener recomendaciones.');
-                    return response.json();
-                })
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/waitlist/count')
+                .then(response => response.json())
                 .then(data => {
-                    const recommendationsDiv = document.getElementById('recommendations');
-                    recommendationsDiv.innerHTML = '';
-                    data.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = 'card';
-                        card.innerHTML = `<h3>${item.name}</h3><p>${item.description}</p>`;
-                        recommendationsDiv.appendChild(card);
+                    document.getElementById('waitlistCount').innerText = `${data.count} personas ya están en la lista`;
+                })
+                .catch(error => console.error('Error al obtener el contador:', error));
+
+            document.getElementById('searchButton').addEventListener('click', () => {
+                const model = document.getElementById('printerModel').value;
+                if (!model) {
+                    alert('Por favor, ingresa un modelo de impresora.');
+                    return;
+                }
+                fetch(`/recommendations?model=${model}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const recommendationsDiv = document.getElementById('recommendations');
+                        recommendationsDiv.innerHTML = '';
+                        data.forEach(t => {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.innerHTML = `<h3>${t.name}</h3><p>${t.description}</p>`;
+                            recommendationsDiv.appendChild(card);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener recomendaciones:', error);
+                        alert('Error al obtener recomendaciones. Intenta de nuevo más tarde.');
                     });
+            });
+
+            document.getElementById('subscribeButton').addEventListener('click', () => {
+                const email = document.getElementById('emailInput').value;
+                if (!email) {
+                    alert('Por favor, ingresa tu correo electrónico.');
+                    return;
+                }
+                fetch('/waitlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('subscriptionMessage').innerText = '¡Anotado! Te avisamos cuando lancemos.';
+                    } else {
+                        throw new Error('Error al suscribirse.');
+                    }
                 })
                 .catch(error => {
-                    document.getElementById('errorMessage').innerText = error.message;
+                    console.error('Error al suscribirse:', error);
+                    alert('Error al suscribirse. Intenta de nuevo más tarde.');
                 });
+            });
         });
     </script>
 </body>
