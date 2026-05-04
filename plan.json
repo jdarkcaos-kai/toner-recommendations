@@ -1,0 +1,44 @@
+{
+  "id": "P-0002",
+  "source_idea_id": "I-0045",
+  "name": "Toner recommendations",
+  "problem": "Los usuarios tienen dificultades para encontrar el toner adecuado para sus impresoras, lo que puede resultar en compras incorrectas y desperdicio de dinero.",
+  "audience": "Propietarios de impresoras, pequeñas empresas, y usuarios domésticos que buscan soluciones rápidas y efectivas para elegir toner.",
+  "mvp": "Una herramienta web que permite a los usuarios ingresar el modelo de su impresora y recibir recomendaciones personalizadas de toner compatibles.",
+  "stack": [
+    "React",
+    "Node.js",
+    "MongoDB"
+  ],
+  "roadmap": [
+    "Investigar modelos de impresoras y sus toners compatibles",
+    "Desarrollar la interfaz de usuario y la lógica de recomendación",
+    "Lanzar la herramienta y recopilar feedback de usuarios"
+  ],
+  "risks": [
+    "Falta de datos precisos sobre compatibilidad de toners",
+    "Baja adopción por parte de los usuarios",
+    "Competencia de herramientas similares ya existentes"
+  ],
+  "category": "general",
+  "priority": "alta",
+  "source": "reddit",
+  "status": "draft",
+  "notes": "",
+  "plan_generated_at": "2026-05-04T02:40:57.977934Z",
+  "build_generated_at": null,
+  "build_path": "",
+  "build_template": "",
+  "build_status": "not_built",
+  "audit_generated_at": null,
+  "audit_status": "",
+  "audit_summary": "",
+  "audit_report_path": "",
+  "llm_audit_generated_at": null,
+  "llm_audit_status": "",
+  "llm_audit_summary": "",
+  "llm_audit_report_path": "",
+  "llm_audit_model": "",
+  "created_at": "2026-05-04T02:40:52.479136Z",
+  "updated_at": "2026-05-04T02:40:57.977942Z"
+}
