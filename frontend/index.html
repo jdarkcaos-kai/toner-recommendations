@@ -80,10 +80,17 @@
                     .then(data => {
                         const recommendationsDiv = document.getElementById('recommendations');
                         recommendationsDiv.innerHTML = '';
+                        if (!data.length) {
+                            recommendationsDiv.innerHTML = '<p style="color:#8b949e">Sin resultados. Prueba con: HP LaserJet, Canon PIXMA, Brother HL</p>';
+                            return;
+                        }
                         data.forEach(t => {
                             const card = document.createElement('div');
                             card.className = 'card';
-                            card.innerHTML = `<h3>${t.name}</h3><p>${t.description}</p>`;
+                            card.innerHTML = `
+                                <h3 style="color:#58a6ff;margin:0 0 6px">${t.printer_model}</h3>
+                                <p style="margin:4px 0"><strong>Tóner:</strong> ${t.toner_model}</p>
+                                <p style="margin:4px 0;color:#8b949e;font-size:13px">Marca: ${t.brand} · Rendimiento: ${t.page_yield}</p>`;
                             recommendationsDiv.appendChild(card);
                         });
                     })

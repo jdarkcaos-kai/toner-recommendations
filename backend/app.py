@@ -32,11 +32,25 @@ def init_db():
         )
     ''')
     cursor.execute('''
-        INSERT OR IGNORE INTO waitlist (email) VALUES
-        ('user1@example.com'),
-        ('user2@example.com'),
-        ('user3@example.com')
+        CREATE TABLE IF NOT EXISTS toners (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            printer_model TEXT UNIQUE,
+            toner_model TEXT,
+            brand TEXT,
+            page_yield TEXT
+        )
     ''')
+    cursor.executemany(
+        "INSERT OR IGNORE INTO toners (printer_model, toner_model, brand, page_yield) VALUES (?,?,?,?)",
+        [
+            ("HP LaserJet Pro M15", "HP 48A (CF248A)", "HP", "~1000 páginas"),
+            ("HP LaserJet Pro M404", "HP 58A (CF258A)", "HP", "~3000 páginas"),
+            ("Canon PIXMA MG2520", "Canon PG-245 / CL-246", "Canon", "~180 páginas"),
+            ("Canon PIXMA TS3120", "Canon PG-243 / CL-244", "Canon", "~180 páginas"),
+            ("Epson EcoTank ET-2720", "Epson 502 Ink Set", "Epson", "~7500 páginas"),
+            ("Brother HL-L2350DW", "Brother TN-730", "Brother", "~1200 páginas"),
+        ]
+    )
     conn.commit()
     conn.close()
 
@@ -47,6 +61,32 @@ def startup_event():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/recommendations")
+def get_recommendations(model: str = ""):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    if model.strip():
+        cursor.execute(
+            "SELECT * FROM toners WHERE LOWER(printer_model) LIKE LOWER(?)",
+            (f"%{model.strip()}%",)
+        )
+    else:
+        cursor.execute("SELECT * FROM toners LIMIT 6")
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
+
+@app.get("/toners")
+def list_toners():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM toners")
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
 
 @app.post("/waitlist", response_model=dict)
 def add_to_waitlist(item: WaitlistItem):
