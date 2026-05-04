@@ -31,7 +31,7 @@ def health_check():
 def get_recommendation(model: str):
     for printer in printer_data:
         if printer.model.lower() == model.lower():
-            return {"model": printer.model, "recommended_toner": printer.toner}
+            return {"model": printer.model, "toner": printer.toner}
     return {"error": "No recommendations found for this model."}
 
 if __name__ == "__main__":
