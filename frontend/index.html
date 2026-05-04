@@ -63,9 +63,13 @@
     </header>
     <div class="container">
         <div class="form-group">
-            <input type="text" id="printerModel" placeholder="Ingresa el modelo de tu impresora">
+            <input type="text" id="printerModel" placeholder="Ej: HP LaserJet Pro M15">
             <button id="searchButton">Buscar Toner</button>
         </div>
+        <p style="color:#8b949e;font-size:13px;margin-top:-10px">
+            Prueba con: <a href="#" style="color:#58a6ff" onclick="document.getElementById('printerModel').value='HP LaserJet Pro M15'">HP LaserJet Pro M15</a>
+            o <a href="#" style="color:#58a6ff" onclick="document.getElementById('printerModel').value='Canon PIXMA MG2520'">Canon PIXMA MG2520</a>
+        </p>
         <div id="recommendations"></div>
         <div class="error" id="errorMessage"></div>
     </div>
@@ -77,7 +81,7 @@
                 return;
             }
             document.getElementById('errorMessage').innerText = '';
-            fetch(`/recommendations?model=${model}`)
+            fetch(`/recommendations/${encodeURIComponent(model)}`)
                 .then(response => {
                     if (!response.ok) throw new Error('Error al obtener recomendaciones.');
                     return response.json();
